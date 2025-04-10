@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Homepage{% endblock %}
+
+{% block content %}
+    <!-- Home Page -->
+    <div id="homePage" class="page active">
+        <div class="header">Hello, User</div>
+        <div class="balance-section">
+            <h2>$2,000.00</h2>
+            <div class="balance-details">
+                <span>Spent: $1,300.00</span>
+                <span>Left: $700.00</span>
+            </div>
+        </div>
+        <div class="insights">
+            <h3>AI Insights</h3>
+            <p>✅ Monthly Trend: 1.2% less spending than last month</p>
+        </div>
+        <div class="add-transaction">
+            <button id="addTransactionBtn">➕ Add Transaction</button>
+        </div>
+
+        <!-- Add hidden modal -->
+        <div id="transactionForm" style="display: none">
+            <form action="{{ url_for('add_transaction') }}" method="POST">
+                <input type="text" name="amount" placeholder="Amount" required>
+                <input type="text" name="category" placeholder="Category" required>
+                <input type="text" name="description" placeholder="Description">
+                <select name="type">
+                  <option value="income">Income</option>
+                  <option value="expense">Expense</option>
+                </select>
+                <button type="submit">Add Transaction</button>
+              </form>
+        </div>
+        <script>
+            document.getElementById('addTransactionBtn').addEventListener('click', () =>{
+                const form = document.getElementById('transactionForm');
+                form.style.display = form.style.display == 'none' ? 'block' : 'none';
+            })
+        </script>
+
+        <div class="transaction-section">
+            <h3>Recent Transactions</h3>
+            {% for txn in transactions %}
+            <div class="transaction-card">
+                <div><strong>{{ txn.type.capitalize() }}</strong>: ₩{{ txn.amount }}</div>
+                <div>Category: {{ txn.category }}</div>
+                <div>Description: {{ txn.description or 'N/A' }}</div>
+                <div>Date: {{ txn.date.strftime('%Y-%m-%d') }}</div>
+            </div>
+            {% else %}
+                <p>No transaction yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

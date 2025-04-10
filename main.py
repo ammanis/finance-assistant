@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Change this to a secure key
@@ -9,7 +10,7 @@ app.secret_key = 'your_secret_key'  # Change this to a secure key
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-
+app.app_context().push() #added his bcs cannot run db.commit()
 class User(db.Model):
     """User Model"""
     id = db.Column(db.Integer, primary_key=True)
@@ -22,12 +23,23 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+# Trasaction Fx
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Float, nullable=False)
+    type = db.Column(db.String(10), nullable=False) # income
+    category = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(200))
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('transactions', lazy=True))
 
 @app.route('/')
 def home():
     """Redirects logged-in users to man.html, otherwise shows index.html"""
     if 'username' in session:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('homepage'))
     return render_template('index.html')
 
 @app.route('/login', methods=['POST'])
@@ -40,7 +52,7 @@ def login():
     if user and user.check_password(password):
         session['username'] = username
         session.modified = True  # Ensure session is updated
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('homepage'))
     else:
         return render_template('index.html', error='Invalid username or password.')
 
@@ -60,14 +72,47 @@ def register():
         db.session.commit()
         session['username'] = username
         session.modified = True  # Ensure session is updated
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('homepage'))
 
-@app.route('/dashboard')
-def dashboard():
-    """Displays the finance assistant dashboard (man.html)"""
+@app.route('/homepage')
+def homepage():
+    """Displays the finance assistant homepage (homepage.html)"""
     if 'username' not in session:
         return redirect(url_for('home'))
-    return render_template('dashboard.html', username=session['username'])
+    user = User.query.filter_by(username=session['username']).first()
+
+    if not user:
+            return "User not found", 404
+
+    transactions = Transaction.query.filter_by(user_id=user.id).order_by(Transaction.date.desc()).all()
+    return render_template('homepage.html', username=session['username'], transactions=transactions)
+
+@app.route('/add_transaction', methods=['POST'])
+def add_transaction():
+    if 'username' not in session:
+        return redirect(url_for('home'))
+
+    user = User.query.filter_by(username=session['username']).first()
+    if not user:
+        return "User not found", 404
+
+    amount = float(request.form.get('amount'))
+    trans_type = request.form.get('type')
+    category = request.form.get('category')
+    description = request.form.get('description')
+
+    new_trans = Transaction(
+        amount=amount if trans_type == 'income' else -amount,
+        type=trans_type,
+        category=category,
+        description=description,
+        user_id=user.id
+    )
+
+    db.session.add(new_trans)
+    db.session.commit()
+
+    return redirect(url_for('homepage'))
 
 @app.route('/logout')
 def logout():
