@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Assistant - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='man.css') }}">
+    <style>
+        /* You can also move this into man.css */
+        .full-height {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .login-box {
+            background-color: #f9f9f9;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box .header {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-box input[type="text"],
+        .login-box input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+        }
+
+        .login-box input[type="submit"],
+        .login-box input[type="button"] {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .login-box input[type="submit"]:hover,
+        .login-box input[type="button"]:hover {
+            background-color: #45a049;
+        }
+
+        .form-button-group {
+            display: flex;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="full-height">
+        <div class="login-box">
+            <div class="header">Welcome to Finance Assistant</div>
+
+            {% if error %}
+                <div class="error-message" style="color: red; text-align: center; margin-bottom: 1em;">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <form id="auth-form" action="{{ url_for('login') }}" method="post" style="display: flex; flex-direction: column; gap: 1em;">
+                <input type="text" name="username" placeholder="👤 Username" autocomplete="off" required>
+                <input type="password" name="password" placeholder="🔒 Password" autocomplete="off" required>
+
+                <div class="form-button-group">
+                    <input type="submit" value="Login" onclick="setFormAction('login')">
+                    <input type="button" value="Register" onclick="setFormAction('register')">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function setFormAction(action) {
+            const form = document.getElementById('auth-form');
+            if (action === 'login') {
+                form.action = "{{ url_for('login') }}";
+            } else if (action === 'register') {
+                form.action = "{{ url_for('register') }}";
+            }
+            form.method = "post";
+            form.submit();
+        }
+    </script>
+</body>
+</html>

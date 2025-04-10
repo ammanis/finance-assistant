@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<!-- Profile Page -->
+<div id="profilePage" class="page active">
+    <div class="profile-header">
+        <h2>Profile</h2>
+        <p>爬 爬 卡丁车</p>
+    </div>
+    <div class="profile-summary">
+        <div>
+            <div>Income</div>
+            <div>$2,000</div>
+        </div>
+        <div>
+            <div>Expense</div>
+            <div>$1,300</div>
+        </div>
+    </div>
+    <div class="profile-section">
+        <div class="card">
+            <span>Account</span>
+            <span>></span>
+        </div>
+        <div class="card">
+            <span>Notifications</span>
+            <span>></span>
+        </div>
+        <div class="card">
+            <span>Security</span>
+            <span>></span>
+        </div>
+        <div class="card">
+            <span>Language</span>
+            <span>English</span>
+        </div>
+        <div class="card">
+            <span>Currency</span>
+            <span>USD</span>
+        </div>
+    </div>
+    <div class="logout">
+        <form action="{{ url_for('logout') }}" method="get">
+            <button type="submit" id="logoutBtn">Log Out</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

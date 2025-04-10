@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Finance Assistant{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='man.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Page-specific content will go here -->
+        {% block content %}
+        {% endblock %}
+
+        <!-- Navigation bar at the bottom -->
+        {% include 'nav.html' %}
+    </div>
+</body>
+</html>

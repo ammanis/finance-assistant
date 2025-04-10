@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics{% endblock %}
+
+{% block content %}
+<!-- Stats Page -->
+    <div id="statsPage" class="page active">
+        <div class="header">Statistics</div>
+        <div class="stats-content">
+            <div class="time-tabs">
+                <button class="active">Week</button>
+                <button>Month</button>
+                <button>Year</button>
+            </div>
+            
+            <div class="chart-section">
+                <h2>Spending Overview</h2>
+                <div class="chart-container">
+                    <canvas id="spendingChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="category-section">
+                <h2>Category Breakdown</h2>
+                <div class="category-list">
+                    <div class="category-item">
+                        <span class="category-name">Food</span>
+                        <span class="category-amount">$450.00</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="category-name">Transport</span>
+                        <span class="category-amount">$120.00</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="category-name">Shopping</span>
+                        <span class="category-amount">$300.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
