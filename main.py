@@ -81,6 +81,7 @@ def homepage():
         return redirect(url_for('home'))
     user = User.query.filter_by(username=session['username']).first()
 
+    # if shows this, just write URL .../logout
     if not user:
             return "User not found", 404
 
@@ -113,6 +114,16 @@ def add_transaction():
     db.session.commit()
 
     return redirect(url_for('homepage'))
+
+@app.route("/clear_transactions", methods=['POST'])
+def clear_transactions():
+    if 'username' not in session:
+        return redirect(url_for('home'))
+    user = User.query.filter_by(username=session['username']).first()
+    if user:
+        Transaction.query.filter_by(user_id=user.id).delete()
+        db.session.commit()
+    return redirect(url_for('homepage'))    
 
 @app.route('/logout')
 def logout():
