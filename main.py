@@ -1,39 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, session # move from 1 page to other pages
+from werkzeug.security import generate_password_hash, check_password_hash # security?
+from models import db, User, Transaction # import from file models.py
+from datetime import datetime # time, duh..
+from pytz import timezone # convert UTC -> KST
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Change this to a secure key
 
 # Configuring SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/finance_manager'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-app.app_context().push() #added his bcs cannot run db.commit()
-class User(db.Model):
-    """User Model"""
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    password_hash = db.Column(db.String(150), nullable=False)
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-# Trasaction Fx
-class Transaction(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    amount = db.Column(db.Float, nullable=False)
-    type = db.Column(db.String(10), nullable=False) # income
-    category = db.Column(db.String(50), nullable=False)
-    description = db.Column(db.String(200))
-    date = db.Column(db.DateTime, default=datetime.utcnow)
-
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User', backref=db.backref('transactions', lazy=True))
+db.init_app(app)
 
 @app.route('/')
 def home():
@@ -85,7 +62,7 @@ def homepage():
     if not user:
             return "User not found", 404
 
-    transactions = Transaction.query.filter_by(user_id=user.id).order_by(Transaction.date.desc()).all()
+    transactions = Transaction.query.filter_by(user_id=user.user_id).order_by(Transaction.date.desc()).all()
     return render_template('homepage.html', username=session['username'], transactions=transactions)
 
 @app.route('/add_transaction', methods=['POST'])
@@ -102,12 +79,17 @@ def add_transaction():
     category = request.form.get('category')
     description = request.form.get('description')
 
+    # Convert UTC to KST
+    kst = timezone('Asia/Seoul')
+    now_kst = datetime.now(kst)
+
     new_trans = Transaction(
         amount=amount if trans_type == 'income' else -amount,
         type=trans_type,
         category=category,
         description=description,
-        user_id=user.id
+        user_id=user.user_id,
+        date = now_kst # <-- save KST time here
     )
 
     db.session.add(new_trans)
@@ -121,7 +103,7 @@ def clear_transactions():
         return redirect(url_for('home'))
     user = User.query.filter_by(username=session['username']).first()
     if user:
-        Transaction.query.filter_by(user_id=user.id).delete()
+        Transaction.query.filter_by(user_id=user.user_id).delete()
         db.session.commit()
     return redirect(url_for('homepage'))    
 

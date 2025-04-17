@@ -28,8 +28,8 @@
                 <input type="text" name="category" placeholder="Category" required>
                 <input type="text" name="description" placeholder="Description">
                 <select name="type">
-                  <option value="income">Income</option>
-                  <option value="expense">Expense</option>
+                  <option value="expense">Income</option>
+                  <option value="income">Expense</option>
                 </select>
                 <button type="submit">Add Transaction</button>
               </form>
@@ -56,7 +56,8 @@
 
             {% if transactions %}
             <!-- Clear button OUTSIDE the loop -->
-            <form action="{{ url_for('clear_transactions') }}" method="POST" onsubmit="return confirm('Are you sure you want to clear all transactions?');">
+            <form action="{{ url_for('clear_transactions') }}" method="POST" onsubmit="return confirm
+            ('Are you sure you want to clear all transactions?');">
                 <button type="submit" style="background-color: red;color: white;">Clear All</button>
             </form>
             {% endif %}
