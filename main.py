@@ -62,8 +62,20 @@ def homepage():
     if not user:
             return "User not found", 404
 
-    transactions = Transaction.query.filter_by(user_id=user.user_id).order_by(Transaction.date.desc()).all()
-    return render_template('homepage.html', username=session['username'], transactions=transactions)
+    transactions = Transaction.query.filter_by(user_id=user.user_id).all()
+
+    total_income = sum(t.amount for t in transactions if t.amount >0)
+    total_expense = sum(t.amount for t in transactions if t.amount < 0)
+
+    #balance = user.initial_income + total_income - total_expense ## why this code is useless, bcs 'total_expense' is -ve value..
+    balance = user.initial_income + total_income + total_expense
+
+    return render_template('homepage.html', username=session['username'],
+                            transactions=transactions,
+                            total_income = total_income,
+                            total_expense=abs(total_expense),
+                            balance=balance,
+                            user=user)
 
 @app.route('/add_transaction', methods=['POST'])
 def add_transaction():
@@ -107,6 +119,20 @@ def clear_transactions():
         db.session.commit()
     return redirect(url_for('homepage'))    
 
+@app.route('/set_income', methods=['POST'])
+def set_income():
+    if 'username' not in session:
+        return redirect(url_for('home'))
+    
+    user = User.query.filter_by(username=session['username']).first()
+    if not user:
+        return "User not found", 404
+    
+    user.initial_income = float(request.form.get('initial_income'))
+    db.session.commit()
+
+    return redirect(url_for('profile'))
+
 @app.route('/logout')
 def logout():
     """Logs out the user"""
@@ -130,8 +156,26 @@ def ai():
 def profile():
     if 'username' not in session:
         return redirect(url_for('home'))
-    return render_template('profile.html', username=session['username'])
+    
+    # Get the user object from database
+    user = User.query.filter_by(username=session['username']).first()
+    if not user:
+        return "User not found", 404
+    
+    # Get this user's transactions
+    transactions = Transaction.query.filter_by(user_id=user.user_id).all()
 
+    total_income = user.initial_income + sum(t.amount for t in transactions if t.amount >0)
+    total_expense = sum(t.amount for t in transactions if t.amount < 0)
+    return render_template('profile.html', username=session['username'],
+                           total_income=total_income,
+                           total_expense=abs(total_expense),
+                           user=user) # abs() so not -ve
+
+@app.template_filter('format_won')
+def format_won(value):
+    """Formats number with commas for Korean Won"""
+    return "{:,}".format(value)
 
 if __name__ == '__main__':
     with app.app_context():

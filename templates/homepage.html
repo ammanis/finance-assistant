@@ -5,12 +5,12 @@
 {% block content %}
     <!-- Home Page -->
     <div id="homePage" class="page active">
-        <div class="header">Hello, User</div>
+        <div class="header">Hello, {{user.username}}</div>
         <div class="balance-section">
-            <h2>$2,000.00</h2>
+            <h2>₩{{ balance|int|format_won }}</h2>
             <div class="balance-details">
-                <span>Spent: $1,300.00</span>
-                <span>Left: $700.00</span>
+                <span>Spent: ₩{{ total_expense|int|format_won}}</span>
+                <span>Left: ₩{{ balance|int|format_won }}</span>
             </div>
         </div>
         <div class="insights">
@@ -28,8 +28,8 @@
                 <input type="text" name="category" placeholder="Category" required>
                 <input type="text" name="description" placeholder="Description">
                 <select name="type">
-                  <option value="expense">Income</option>
-                  <option value="income">Expense</option>
+                  <option value="income">Income</option>
+                  <option value="expense">Expense</option>
                 </select>
                 <button type="submit">Add Transaction</button>
               </form>
@@ -49,6 +49,7 @@
                 <div>Category: {{ txn.category }}</div>
                 <div>Description: {{ txn.description or 'N/A' }}</div>
                 <div>Date: {{ txn.date.strftime('%Y-%m-%d') }}</div>
+                <div>==================================</div>
             </div>
             {% else %}
                 <p>No transaction yet.</p>

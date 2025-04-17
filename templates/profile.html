@@ -7,19 +7,28 @@
 <div id="profilePage" class="page active">
     <div class="profile-header">
         <h2>Profile</h2>
-        <p>爬 爬 卡丁车</p>
+        <p>{{user.username}}</p>
     </div>
     <div class="profile-summary">
         <div>
             <div>Income</div>
-            <div>$2,000</div>
+            <div>₩{{total_income|int|format_won }}</div>
         </div>
         <div>
             <div>Expense</div>
-            <div>$1,300</div>
+            <div>₩{{total_expense|int|format_won}}</div>
         </div>
+        
     </div>
+    
     <div class="profile-section">
+        <div class="card">
+            <form method="POST" action="{{ url_for('set_income') }}">
+                <label for="initial_income">Set Your Initial Income:</label>
+                <input type="number" step="0.01" name="initial_income" required>
+                <button type="submit">Save</button> 
+            </form>
+        </div>
         <div class="card">
             <span>Account</span>
             <span>></span>
@@ -38,7 +47,7 @@
         </div>
         <div class="card">
             <span>Currency</span>
-            <span>USD</span>
+            <span>KRW</span>
         </div>
     </div>
     <div class="logout">

@@ -14,6 +14,7 @@ class User(db.Model):
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
     update_time = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     status = db.Column(db.SmallInteger, default=1) # yup, cannot use db.TinyInteger here (used in MySQL LIU did)
+    initial_income = db.Column(db.Float, default=0.0) # to set initial income
 
     # Transactions relationship
     transactions = db.relationship('Transaction', backref='user', lazy=True)
