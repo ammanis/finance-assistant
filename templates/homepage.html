@@ -18,6 +18,11 @@
             <p>✅ Monthly Trend: 1.2% less spending than last month</p>
         </div>
         <div class="add-transaction">
+            <a href="{{ url_for('camera') }}">
+            <button id="scanButton">📷 Scan</button>
+            </a>
+        </div>
+        <div class="add-transaction">
             <button id="addTransactionBtn">➕ Add Transaction</button>
         </div>
 
@@ -45,7 +50,7 @@
             <h3>Recent Transactions</h3>
             {% for txn in transactions %}
             <div class="transaction-card">
-                <div><strong>{{ txn.type.capitalize() }}</strong>: ₩{{ txn.amount }}</div>
+                <div><strong>{{ txn.type.capitalize() }}</strong>: ₩{{ txn.amount | abs | int |format_won }}</div>
                 <div>Category: {{ txn.category }}</div>
                 <div>Description: {{ txn.description or 'N/A' }}</div>
                 <div>Date: {{ txn.date.strftime('%Y-%m-%d') }}</div>

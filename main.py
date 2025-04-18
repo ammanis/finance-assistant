@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session # move from 1 page to other pages
 from werkzeug.security import generate_password_hash, check_password_hash # security?
-from models import db, User, Transaction # import from file models.py
 from datetime import datetime # time, duh..
 from pytz import timezone # convert UTC -> KST
+from models import db, User, Transaction # import from file models.py
+from utils.budget_analysis import get_budget_vs_expense # import from file /utils/budget_analysis
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Change this to a secure key
@@ -26,7 +27,7 @@ def login():
     password = request.form.get('password')
     user = User.query.filter_by(username=username).first()
     
-    if user and user.check_password(password):
+    if user and user.check_password(password): # the line where to check hash password
         session['username'] = username
         session.modified = True  # Ensure session is updated
         return redirect(url_for('homepage'))
@@ -76,6 +77,10 @@ def homepage():
                             total_expense=abs(total_expense),
                             balance=balance,
                             user=user)
+
+@app.route('/camera')
+def camera():
+    return render_template('camera.html')
 
 @app.route('/add_transaction', methods=['POST'])
 def add_transaction():
@@ -145,6 +150,16 @@ def stats():
     if 'username' not in session:
         return redirect(url_for('home'))
     return render_template('stats.html', username=session['username'])
+
+@app.route('/budget_analysis')
+def budget_analysis():
+    if 'username' not in session:
+        return redirect(url_for('home'))
+    
+    user=User.query.filter_by(username=session['username']).first()
+    current_month = datetime.now().strftime('%Y-%m')
+    analysis = get_budget_vs_expense(user.id, current_month)
+    return render_template('budget_analysis.html', data=analysis)
 
 @app.route('/ai')
 def ai():

@@ -1,0 +1,8 @@
+<h3>Budget Analysis</h3>
+{% if data %}
+    <p>Budget Amount: ₩{{ "{:, .0f}".format(data.budget_amount) }}</p>
+    <p>Actual Expense: ₩{{ "{:, .0f}".format(data.actual_expense) }}</p>
+    <p>Remanining Budget: ₩{{ "{:, .0f}".format(data.remaining_budget) }}</p>
+{% else %}
+    <p>No budget data available for this month.</p>
+{% endif %}

@@ -1,3 +1,37 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const closeButton = document.getElementById("closeCamera");
+    const video = document.getElementById("video");
+    let stream = null;
+  
+    // Only activate on camera page
+    if (video && closeButton) {
+      // Start camera when page loads (user has already clicked scan before this)
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then((mediaStream) => {
+          stream = mediaStream;
+          video.srcObject = stream;
+        })
+        .catch((err) => {
+          alert("Camera access denied: " + err.message);
+          console.error(err);
+        });
+  
+      // Handle Close button
+      closeButton.addEventListener("click", () => {
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+  
+        if (video) {
+          video.srcObject = null;
+        }
+  
+        window.location.href = "/";
+      });
+    }
+  });
+  
+
 // Initialize the chart when stats page loads
 function initStatsChart() {
     const ctx = document.getElementById('spendingChart').getContext('2d');

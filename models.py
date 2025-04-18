@@ -19,10 +19,10 @@ class User(db.Model):
     # Transactions relationship
     transactions = db.relationship('Transaction', backref='user', lazy=True)
 
-    def set_password(self, password):
+    def set_password(self, password): # stored hash password
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    def check_password(self, password): # verify the hash password
         return check_password_hash(self.password_hash, password)
 
 class Category(db.Model):
