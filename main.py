@@ -1,11 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, session # move from 1 page to other pages
-from werkzeug.security import generate_password_hash, check_password_hash # security?
-from datetime import datetime # time, duh..
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash # created hashed password
+from datetime import datetime, timedelta # time, duh..
 from pytz import timezone # convert UTC -> KST
 from models import db, User, Transaction # import from file models.py
 from utils.budget_analysis import get_budget_vs_expense # import from file /utils/budget_analysis
+from sqlalchemy import extract
+from flask_cors import CORS
+from collections import defaultdict
+import calendar
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True) # Access-Control-Allow-Origin ?
 app.secret_key = 'your_secret_key'  # Change this to a secure key
 
 # Configuring SQLAlchemy
@@ -29,6 +34,7 @@ def login():
     
     if user and user.check_password(password): # the line where to check hash password
         session['username'] = username
+        session['user_id'] = user.user_id
         session.modified = True  # Ensure session is updated
         return redirect(url_for('homepage'))
     else:
@@ -151,14 +157,53 @@ def stats():
         return redirect(url_for('home'))
     return render_template('stats.html', username=session['username'])
 
+@app.route('/api/transaction-data')
+def transaction_data():
+    try:
+        user_id = session.get('user_id')
+        print(f"[DEBUG] Session user_id: {user_id}")
+        
+        if not user_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        transactions = Transaction.query.filter_by(user_id=user_id).all()
+        print(f"[DEBUG] Found {len(transactions)} transactions")
+        
+        # Initialize a dictionary with days of the week (Monday to Sunday)
+        data = defaultdict(float)
+
+        # Map transactions to days of the week
+        for t in transactions:
+            day_of_week = t.date.weekday()  # Get weekday (0=Monday, 6=Sunday)
+            day_name = calendar.day_name[day_of_week]  # Convert to full weekday name
+            data[day_name] += abs(t.amount)
+
+        # Order the data by the weekday name (Monday to Sunday)
+        ordered_data = {day: data[day] for day in calendar.day_name}
+
+        # Convert to chart-friendly format
+        chart_data = {
+            "labels": list(ordered_data.keys()),
+            "data": list(ordered_data.values())
+        }
+
+        print(f"[DEBUG] Chart data: {chart_data}")
+        return jsonify(chart_data)
+    
+    except Exception as e:
+        print(f"[ERROR] /api/transaction-data failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/budget_analysis')
 def budget_analysis():
+    # Ensure user logged in
     if 'username' not in session:
         return redirect(url_for('home'))
     
-    user=User.query.filter_by(username=session['username']).first()
-    current_month = datetime.now().strftime('%Y-%m')
-    analysis = get_budget_vs_expense(user.id, current_month)
+    user=User.query.filter_by(username=session['username']).first() # Get data from database
+    current_month = datetime.now().strftime('%Y-%m') # Get current month, to match budget_period format
+    # Call core analysis fx to compare user's budget & expenses
+    analysis = get_budget_vs_expense(user.user_id, current_month) # Use raw SQL and joins budgets and transactions
     return render_template('budget_analysis.html', data=analysis)
 
 @app.route('/ai')
