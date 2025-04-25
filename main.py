@@ -8,15 +8,16 @@ from sqlalchemy import extract
 from flask_cors import CORS
 from collections import defaultdict
 import calendar
+import pytz # converting UTC -> KST
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True) # Access-Control-Allow-Origin ?
 app.secret_key = 'your_secret_key'  # Change this to a secure key
 
 # Configuring SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/finance_manager'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/finance_manager' # mysql -u root -p
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False                                          # password: root
+db.init_app(app)                                                                              # USE finance_manager;          
 
 @app.route('/')
 def home():
@@ -157,8 +158,64 @@ def stats():
         return redirect(url_for('home'))
     return render_template('stats.html', username=session['username'])
 
-@app.route('/api/transaction-data')
-def transaction_data():
+from datetime import datetime, timedelta
+
+from datetime import datetime, timedelta
+
+from datetime import datetime, timedelta
+
+from datetime import datetime, timedelta
+import pytz
+
+@app.route('/api/weekly-spending-data')
+def weekly_spending_data():
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        transactions = Transaction.query.filter_by(user_id=user_id).all()
+
+        # Set up timezone (KST)
+        kst = pytz.timezone('Asia/Seoul')
+        today_kst = datetime.now(kst)
+
+        # Start of this week (Monday) in KST
+        start_of_week_kst = today_kst.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=today_kst.weekday())
+
+        # Days labels for the chart
+        days_of_week = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        weekly_spending = {day: 0 for day in days_of_week}
+
+        for t in transactions:
+            if t.amount < 0:
+                tx_time = t.date
+
+                # Make sure it's timezone-aware
+                if tx_time.tzinfo is None:
+                    tx_time = pytz.utc.localize(tx_time).astimezone(kst)
+                else:
+                    tx_time = tx_time.astimezone(kst)
+
+                # Calculate which day of the week (Mon-Sun) this falls into
+                delta_days = (tx_time.date() - start_of_week_kst.date()).days
+
+                if 0 <= delta_days < 7:
+                    weekday_index = tx_time.weekday()  # 0 = Mon, 6 = Sun
+                    day_name = days_of_week[weekday_index]
+                    weekly_spending[day_name] += abs(t.amount)
+
+        return jsonify({
+            'days': days_of_week,
+            'spending': [weekly_spending[day] for day in days_of_week]
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/category-breakdown')
+def category_breakdown():
     try:
         user_id = session.get('user_id')
         print(f"[DEBUG] Session user_id: {user_id}")
@@ -169,30 +226,29 @@ def transaction_data():
         transactions = Transaction.query.filter_by(user_id=user_id).all()
         print(f"[DEBUG] Found {len(transactions)} transactions")
         
-        # Initialize a dictionary with days of the week (Monday to Sunday)
-        data = defaultdict(float)
-
-        # Map transactions to days of the week
+        # Dictionary to store category-wise spending
+        category_spending = {}
+        
+        # Iterate over all transactions to group by category
         for t in transactions:
-            day_of_week = t.date.weekday()  # Get weekday (0=Monday, 6=Sunday)
-            day_name = calendar.day_name[day_of_week]  # Convert to full weekday name
-            data[day_name] += abs(t.amount)
-
-        # Order the data by the weekday name (Monday to Sunday)
-        ordered_data = {day: data[day] for day in calendar.day_name}
-
-        # Convert to chart-friendly format
-        chart_data = {
-            "labels": list(ordered_data.keys()),
-            "data": list(ordered_data.values())
+            if t.amount < 0:  # Only considering expenses (negative amounts)
+                if t.category not in category_spending:
+                    category_spending[t.category] = 0
+                category_spending[t.category] += abs(t.amount)
+        
+        # Prepare the data to be returned
+        response_data = {
+            'categories': category_spending
         }
 
-        print(f"[DEBUG] Chart data: {chart_data}")
-        return jsonify(chart_data)
+        print(f"[DEBUG] Category breakdown data: {response_data}")
+        
+        return jsonify(response_data)
     
     except Exception as e:
-        print(f"[ERROR] /api/transaction-data failed: {e}")
+        print(f"[ERROR] /api/category-breakdown failed: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/budget_analysis')
 def budget_analysis():

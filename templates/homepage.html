@@ -47,18 +47,28 @@
             })
         </script>
 
+        <!-- Transaction Section -->
         <div class="transaction-section">
             <h3>Recent Transactions</h3>
             {% for txn in transactions %}
             <div class="transaction-card">
-                <div><strong>{{ txn.type.capitalize() }}</strong>: ₩{{ txn.amount | abs | int |format_won }}</div>
-                <div>Category: {{ txn.category }}</div>
-                <div>Description: {{ txn.description or 'N/A' }}</div>
-                <div>Date: {{ txn.date.strftime('%Y-%m-%d') }}</div>
-                <div>==================================</div>
+                <div class="transaction-header">
+                    <span class="category">{{ txn.category }}</span>
+                    <span class="amount {% if txn.amount < 0 %}negative{% else %}positive{% endif %}">
+                        ₩{{ txn.amount | abs | int | format_won }}
+                    </span>
+                </div>
+                <div class="transaction-body">
+                    <div class="transaction-description">
+                        <strong>Description:</strong> {{ txn.description or '-' }}
+                    </div>
+                    <div class="transaction-date">
+                        <strong>Date:</strong> {{ txn.date.strftime('%Y-%m-%d') }}
+                    </div>
+                </div>
             </div>
             {% else %}
-                <p>No transaction yet.</p>
+                <p>No transactions yet.</p>
             {% endfor %}
 
             {% if transactions %}
