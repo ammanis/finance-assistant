@@ -1,3 +1,31 @@
+-- mysql -u root -p
+-- password: root
+-- USE finance_manager; 
+
+-- SELECT * FROM users, transactions, categories;
+
+-- INSERT INTO users, transactions, categories ("your_attributes")
+-- VALUE
+-- ("what u want to add")
+
+-- DELETE FROM categories;
+-- INSERT INTO categories (category_id, name, type, user_id) VALUES
+-- (1, 'Groceries', 2, NULL),
+-- (2, 'Dining', 2, NULL),
+-- (3, 'Transport', 2, NULL),
+-- (4, 'Bills', 2, NULL),
+-- (5, 'Rent', 2, NULL),
+-- (6, 'Healthcare', 2, NULL),
+-- (7, 'Education', 2, NULL),
+-- (8, 'Shopping', 2, NULL),
+-- (9, 'Entertainment', 2, NULL),
+-- (10, 'Subscription', 2, NULL),
+-- (11, 'Travel', 2, NULL),
+-- (12, 'Gift', 2, NULL),
+-- (13, 'Insurance', 2, NULL),
+-- (14, 'Others', 2, NULL);
+
+
 DROP DATABASE IF EXISTS finance_manager;
 
 -- Create database

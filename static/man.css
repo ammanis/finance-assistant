@@ -230,6 +230,12 @@ body {
     margin-top: 20px;
 }
 
+.chart-container-year{
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 10px;
+}
+
 .category-list {
     border-top: 1px solid #eee;
 }

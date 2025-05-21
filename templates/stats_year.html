@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Monthly Statistics{% endblock %}
+{% block title %}Yearly Statistics{% endblock %}
 
 {% block content %}
-<div class="header">Monthly Statistics</div>
+<div class="header">Yearly Statistics</div>
 <div class="stats-content">
     <div class="time-tabs">
         <a href="/stats/week"><button>Week</button></a>
-        <a href="/stats/month"><button class="active">Month</button></a>
-        <a href="/stats/year"><button>Year</button></a>
+        <a href="/stats/month"><button>Month</button></a>
+        <a href="/stats/year"><button class="active">Year</button></a>
     </div>
 
     <div class="chart-section">
         <h2>Spending Overview</h2>
-        <div class="chart-container"><canvas id="spendingChart"></canvas></div>
+        <div class="chart-container-year"><canvas id="spendingChart"></canvas></div>
     </div>
 
     <div class="category-section">
@@ -23,8 +23,8 @@
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        updateMonthlyChart();
-        updateCategoryBreakdown('month');
-    });
+        updateYearlyChart();
+        updateCategoryBreakdown('year');
+    })
 </script>
 {% endblock %}

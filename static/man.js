@@ -122,6 +122,73 @@ function updateMonthlyChart() {
         });
 }
 
+function updateYearlyChart() {
+    fetch('/api/yearly-spending-data')
+    .then(response => response.json())
+    .then(data => {
+        if (!Array.isArray(data)) {
+            throw new Error("Invalid data format from server");
+        }
+
+        const labels = data.map(d => d.year.toString());
+        const values = data.map(d => Math.abs(d.total)); // 💡 use absolute value
+
+        const ctx = document.getElementById('spendingChart').getContext('2d');
+        if (spendingChart) spendingChart.destroy();  
+
+        spendingChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Yearly Spending (₩)',
+                    data: values,
+                    backgroundColor: '#FF9F40',
+                    borderColor: '#FF9F40',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return `₩${value.toLocaleString()}`;
+                            }
+                        },
+                        grid: { color: '#f0f0f0' }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `₩${context.raw.toLocaleString()}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Error loading yearly data:', error);
+    });
+}
+
 // Tab switch logic
 document.addEventListener("DOMContentLoaded", () => {
     // Default load
@@ -141,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 updateMonthlyChart();
                 updateCategoryBreakdown('month');
             } else if (idx === 2) {
-                console.log("Yearly chart not implemented yet");
+                updateYearlyChart();
                 updateCategoryBreakdown('year');
             }
         });

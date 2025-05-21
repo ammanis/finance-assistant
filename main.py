@@ -1,3 +1,8 @@
+# git add.
+# git commit -m ""
+# git tag -a v1.0 -m ""
+# git push origin v1.0
+
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash # created hashed password
 from datetime import datetime, timedelta # time, duh..
@@ -8,16 +13,23 @@ from sqlalchemy import extract
 from flask_cors import CORS
 from collections import defaultdict
 import calendar
+
 import pytz # converting UTC -> KST
+
 # for data_backup
 from flask import send_file
 from data_backup import DataBackupManager
+
 # for budget_analysis
 from utils.budget_analysis import get_budget_vs_expense
+
 # for analysis_tool
 from utils.analysis_tool import get_expense_by_category
+
 # for performance_tester
 from utils.performance_tester import PerformanceTester
+
+from sqlalchemy import text
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True) # Access-Control-Allow-Origin ?
@@ -170,7 +182,6 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('home'))
 
-# Routes for Different Pages
 @app.route('/stats')
 def stats():
     if 'username' not in session:
@@ -189,6 +200,13 @@ def stats_month():
         return redirect(url_for('login'))
     return render_template('stats_month.html', active_tab='month')
 
+@app.route('/stats/year')
+def stats_year():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('stats_year.html', activate_tab='year')
+
+# Logic to aggregate expense data by week/month/year
 @app.route('/api/weekly-spending-data')
 def weekly_spending_data():
     try:
@@ -269,6 +287,38 @@ def monthly_category_data():
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/yearly-spending-data')
+def yearly_spending_data():
+    print("👉 Entered yearly_spending_data route")
+    user_id = session.get('user_id')
+    print("✅ user_id:", user_id)
+
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    try:
+        result = db.session.execute(
+            text("""
+                SELECT YEAR(date) AS year, SUM(ABS(amount)) AS total
+                FROM transactions
+                WHERE user_id = :user_id
+                GROUP BY year
+                ORDER BY year
+            """),
+            {"user_id": user_id}
+        )
+
+        rows = result.fetchall()
+        data = [{"year": row.year, "total": float(row.total)} for row in rows]
+
+        print("📦 Yearly data sent to frontend:", data)
+        return jsonify(data)
+
+    except Exception as e:
+        print("❌ Error in /api/yearly-spending-data:", str(e))
+        return jsonify({"error": "Internal server error"}), 500
+
 
 @app.route('/api/category-breakdown')
 def category_breakdown():
