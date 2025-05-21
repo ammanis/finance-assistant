@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Monthly Statistics{% endblock %}
+
+{% block content %}
+<div class="header">Monthly Statistics</div>
+<div class="stats-content">
+    <div class="time-tabs">
+        <a href="/stats/week"><button>Week</button></a>
+        <a href="/stats/month"><button class="active">Month</button></a>
+    </div>
+
+    <div class="chart-section">
+        <h2>Monthly Category Distribution</h2>
+        <div class="chart-container"><canvas id="spendingChart"></canvas></div>
+    </div>
+
+    <div class="category-section">
+        <h2>Category Breakdown</h2>
+        <div class="category-list"></div>
+        <div class="total-expenses"><h3>Total Expenses: ₩0</h3></div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        updateMonthlyChart();
+        updateCategoryBreakdown('month');
+    });
+</script>
+{% endblock %}

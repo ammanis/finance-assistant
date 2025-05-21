@@ -22,8 +22,8 @@ class User(db.Model):
     def set_password(self, password): # stored hash password
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password): # verify the hash password
-        return check_password_hash(self.password_hash, password)
+    def check_password(self, password_hash): # verify the hash password
+        return check_password_hash(self.password_hash, password_hash)
 
 class Category(db.Model):
     __tablename__ = 'categories'  # Make sure this matches the table name in your SQL schema

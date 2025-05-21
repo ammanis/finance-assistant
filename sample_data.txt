@@ -1,0 +1,61 @@
+-- Insert test data for users
+INSERT INTO users (username, password_hash, email, phone) VALUES 
+('johndoe', MD5('password123'), 'john@example.com', '13800138001'),
+('janedoe', MD5('password456'), 'jane@example.com', '13800138002'),
+('bobsmith', MD5('password789'), 'bob@example.com', '13800138003');
+
+-- Insert test data for categories
+-- System preset categories (not associated with any user)
+INSERT INTO categories (name, type) VALUES
+('Salary', 1),    -- Income category
+('Bonus', 1),
+('Investment', 1),
+('Food', 2),      -- Expense category
+('Transportation', 2),
+('Shopping', 2),
+('Rent', 2);
+
+-- User-defined categories
+INSERT INTO categories (name, type, user_id) VALUES
+('Side Hustle', 1, 1),    -- User 1's custom income category
+('Medical', 2, 1),        -- User 1's custom expense category
+('Education', 2, 2);      -- User 2's custom expense category
+
+-- Insert test data for transactions
+INSERT INTO transactions (user_id, amount, type, category_id, payment_method, account_name, transaction_date, description) VALUES
+-- User 1's transactions
+(1, 8000.00, 1, 1, 'Bank Transfer', 'ICBC', '2023-06-01', 'June Salary'),
+(1, 2000.00, 1, 2, 'WeChat', 'WeChat Pay', '2023-06-15', 'Project Bonus'),
+(1, 150.50, 2, 4, 'Alipay', 'Alipay Wallet', '2023-06-03', 'Lunch and Dinner'),
+(1, 35.00, 2, 5, 'Cash', 'Wallet', '2023-06-05', 'Taxi Fare'),
+
+-- User 2's transactions
+(2, 10000.00, 1, 1, 'Bank Transfer', 'BOC', '2023-06-01', 'Monthly Salary'),
+(2, 3000.00, 2, 7, 'Credit Card', 'CMB Credit Card', '2023-06-10', 'Monthly Rent'),
+(2, 500.00, 2, 10, 'Alipay', 'Alipay Wallet', '2023-06-20', 'Online Course');
+
+-- Query examples to test the database
+-- Get all transactions for user 1
+SELECT t.transaction_id, t.amount, t.transaction_date, c.name as category, 
+       CASE WHEN t.type = 1 THEN 'Income' ELSE 'Expense' END as type_name,
+       t.payment_method, t.description
+FROM transactions t
+JOIN categories c ON t.category_id = c.category_id
+WHERE t.user_id = 1
+ORDER BY t.transaction_date DESC;
+
+-- Calculate total income and expenses for user 2
+SELECT 
+    SUM(CASE WHEN type = 1 THEN amount ELSE 0 END) as total_income,
+    SUM(CASE WHEN type = 2 THEN amount ELSE 0 END) as total_expense,
+    (SUM(CASE WHEN type = 1 THEN amount ELSE 0 END) - SUM(CASE WHEN type = 2 THEN amount ELSE 0 END)) as balance
+FROM transactions
+WHERE user_id = 2;
+
+-- Get transaction summary by category for user 1
+SELECT c.name as category_name, SUM(t.amount) as total_amount
+FROM transactions t
+JOIN categories c ON t.category_id = c.category_id
+WHERE t.user_id = 1
+GROUP BY c.name
+ORDER BY total_amount DESC;

@@ -30,21 +30,50 @@
         <div id="transactionForm" style="display: none">
             <form action="{{ url_for('add_transaction') }}" method="POST">
                 <input type="text" name="amount" placeholder="Amount" required>
-                <input type="text" name="category" placeholder="Category" required>
-                <input type="text" name="description" placeholder="Description">
-                <select name="type">
-                  <option value="income">Income</option>
-                  <option value="expense">Expense</option>
+
+                <select name="type" id="transTypeSelect" required>
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
                 </select>
+
+                <select name="category" id="categorySelect" required>
+                    <!-- Options are populated by JS -->
+                </select>
+  
+                <input type="text" name="description" placeholder="Description">
                 <button type="submit">Add Transaction</button>
               </form>
         </div>
         <script>
-            document.getElementById('addTransactionBtn').addEventListener('click', () =>{
-                const form = document.getElementById('transactionForm');
-                form.style.display = form.style.display == 'none' ? 'block' : 'none';
-                updateChart();
-            })
+        const incomeCategories = ['Salary', 'Allowance', 'Other Income'];
+        const expenseCategories = [
+            'Groceries', 'Dining', 'Transport', 'Bills', 'Rent',
+            'Healthcare', 'Education', 'Shopping', 'Entertainment',
+            'Subscription', 'Travel', 'Gift', 'Insurance', 'Others'
+        ];
+
+        function updateCategoryOptions() {
+            const type = document.getElementById('transTypeSelect').value;
+            const categorySelect = document.getElementById('categorySelect');
+            const categories = type === 'income' ? incomeCategories : expenseCategories;
+
+            categorySelect.innerHTML = ''; // Clear existing options
+            categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            categorySelect.appendChild(option);
+            });
+        }
+
+        document.getElementById('addTransactionBtn').addEventListener('click', () => {
+            const form = document.getElementById('transactionForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            updateCategoryOptions();
+            updateChart();
+        });
+
+        document.getElementById('transTypeSelect').addEventListener('change', updateCategoryOptions);
         </script>
 
         <!-- Transaction Section -->
