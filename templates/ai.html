@@ -8,19 +8,44 @@
     <div class="header">
         <h3>AI Assistant</h3>
     </div>
+
+    <!-- Alert & Insight Box -->
     <div class="ai-card">
-        <h4>⚠️ Spending Alert</h4>
-        <p>Your food expenses are 20% higher than usual this week.</p>
-        <a href="#">View Details</a>
-    </div>
+        <h3>🔔 Alerts & Insights</h3>
+        <div class="transaction-item">
+          <div>
+            <strong>⚠️ Spending Alert</strong>
+            <p>Your food expenses are 20% higher than usual this week.</p>
+          </div>
+          <a href="#" style="align-self:center; color: #6a5acd; font-weight:600;">Details</a>
+        </div>
+        <div class="transaction-item">
+          <div>
+            <strong>✅ Savings Goal</strong>
+            <p>You're on track to reach your monthly savings goal!</p>
+          </div>
+          <a href="#" style="align-self:center; color: #6a5acd; font-weight:600;">Progress</a>
+        </div>
+      </div>
+
+      <!-- Smart Tips Box -->
+      <div class="ai-card">
+        <h3>💡 Smart Tips</h3>
+        <ul style="padding-left: 20px;">
+          <li>Use cash-back cards for groceries.</li>
+          <li>Set weekly spending caps.</li>
+          <li>Plan meals to cut food waste.</li>
+        </ul>
+      </div>
+
     <div class="ai-card">
-        <h4>✅ Savings Goal</h4>
-        <p>You're on track to reach your monthly savings goal!</p>
-        <a href="#">View Progress</a>
-    </div>
-    <div class="chat-input">
-        <input type="text" placeholder="Type your question...">
-        <button>📩</button>
+        <h3>🤖 Chat with AI</h3>
+        <div class="chat-input">
+          <input type="text" id="chatInput" placeholder="Ask me something...">
+          <button>📩</button>
+        </div>
+        <div id="chatResponse" class="chat-response" style="display:none;"></div>
+      </div>
     </div>
 </div>
 {% endblock %}  

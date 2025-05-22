@@ -4,17 +4,20 @@
 
 {% block content %}
 <!-- Profile Page -->
+ 
 <div id="profilePage" class="page active">
     <div class="profile-header">
         <h2>Profile</h2>
         <p>{{user.username}}</p>
     </div>
-    <div class="profile-summary">
-        <div>
+
+    <!-- Income + Expense Total Output -->
+    <div class="transaction-section">
+        <div class="transaction-item">
             <div>Income</div>
             <div>₩{{total_income|int|format_won }}</div>
         </div>
-        <div>
+        <div class="transaction-item">
             <div>Expense</div>
             <div>₩{{total_expense|int|format_won}}</div>
         </div>

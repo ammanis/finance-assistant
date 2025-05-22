@@ -78,35 +78,23 @@
 
         <!-- Transaction Section -->
         <div class="transaction-section">
-            <h3>Recent Transactions</h3>
-            {% for txn in transactions %}
-            <div class="transaction-card">
-                <div class="transaction-header">
-                    <span class="category">{{ txn.category }}</span>
-                    <span class="amount {% if txn.amount < 0 %}negative{% else %}positive{% endif %}">
-                        ₩{{ txn.amount | abs | int | format_won }}
-                    </span>
-                </div>
-                <div class="transaction-body">
-                    <div class="transaction-description">
-                        <strong>Description:</strong> {{ txn.description or '-' }}
-                    </div>
-                    <div class="transaction-date">
-                        <strong>Date:</strong> {{ txn.date.strftime('%Y-%m-%d') }}
-                    </div>
-                </div>
+        <h3>Recent Transactions</h3>
+        {% for txn in transactions %}
+            <div class="transaction-item">
+            <span>{{ txn.category | category_emoji }} {{ txn.category }}</span>
+            <span class="{% if txn.amount < 0 %}negative{% else %}positive{% endif %}">
+                {% if txn.amount < 0 %}-{% else %}+{% endif %} ₩{{ txn.amount | abs | int | format_won }}
+            </span>
             </div>
-            {% else %}
-                <p>No transactions yet.</p>
-            {% endfor %}
+        {% else %}
+            <p>No transactions yet.</p>
+        {% endfor %}
 
-            {% if transactions %}
-            <!-- Clear button OUTSIDE the loop -->
+            <!-- Clear Button -->
             <form action="{{ url_for('clear_transactions') }}" method="POST" onsubmit="return confirm
             ('Are you sure you want to clear all transactions?');">
                 <button type="submit" style="background-color: red;color: white;">Clear All</button>
             </form>
-            {% endif %}
         </div>
     </div>
 {% endblock %}

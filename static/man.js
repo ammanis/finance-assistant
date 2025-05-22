@@ -1,4 +1,26 @@
-let spendingChart;
+let spendingChart; // Global vars - all function can use (week/month/year-spending-data)
+
+const categoryEmojis = { // Emoji for 'updateCategoryBreakdown' fx
+    // Income
+    "Salary": "💼",
+    "Allowance": "💰",
+    "Other Income": "🪙",
+    // Expenses
+    "Groceries": "🛒",
+    "Dining": "🍽️",
+    "Transport": "🚌",
+    "Bills": "🧾",
+    "Rent": "🏠",
+    "Healthcare": "💊",
+    "Education": "📚",
+    "Shopping": "🛍️",
+    "Entertainment": "🎮",
+    "Subscription": "🔄",
+    "Travel": "✈️",
+    "Gift": "🎁",
+    "Insurance": "🛡️",
+    "Others": "❓"
+};
 
 // Initialize weekly stats chart
 function initStatsChart() {
@@ -54,26 +76,28 @@ function updateCategoryBreakdown(mode = 'week') {
         categoryList.innerHTML = '';
         let totalExpenses = 0;
 
+        // For emoji display
         for (let category in data.categories) {
-            const categoryItem = document.createElement('div');
-            categoryItem.classList.add('category-item');
+        const categoryItem = document.createElement('div');
+        categoryItem.classList.add('transaction-item'); // Use same styling as transactions
 
-            const categoryName = document.createElement('span');
-            categoryName.classList.add('category-name');
-            categoryName.textContent = category;
+        const emoji = categoryEmojis[category] || '❔';
 
-            const categoryAmount = document.createElement('span');
-            categoryAmount.classList.add('category-amount');
-            const amount = data.categories[category].toLocaleString();
-            categoryAmount.textContent = `₩${amount}`;
+        const categoryName = document.createElement('span');
+        categoryName.textContent = `${emoji} ${category}`;
 
-            categoryItem.appendChild(categoryName);
-            categoryItem.appendChild(categoryAmount);
-            categoryList.appendChild(categoryItem);
+        const categoryAmount = document.createElement('span');
+        const amount = data.categories[category].toLocaleString();
+        categoryAmount.textContent = `₩${amount}`;
 
-            totalExpenses += data.categories[category];
-        }
+        categoryItem.appendChild(categoryName);
+        categoryItem.appendChild(categoryAmount);
+        categoryList.appendChild(categoryItem);
 
+        totalExpenses += data.categories[category];
+    }
+
+        // Print total expense
         const totalElement = document.querySelector('.total-expenses h3');
         totalElement.textContent = `Total Expenses: ₩${totalExpenses.toLocaleString()}`;
     })

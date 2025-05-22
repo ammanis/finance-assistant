@@ -151,6 +151,32 @@ def add_transaction():
 
     return redirect(url_for('homepage'))
 
+# Category for printing in 'Recent Transactions'
+@app.template_filter('category_emoji')
+def category_emoji(category):
+    emoji_map = {
+        # Income
+        'Salary': '💼',
+        'Allowance': '💰',
+        'Other Income': '🪙',
+        # Expense
+        'Groceries': '🛒',
+        'Dining': '🍽️',
+        'Transport': '🚌',
+        'Bills': '🧾',
+        'Rent': '🏠',
+        'Healthcare': '💊',
+        'Education': '📚',
+        'Shopping': '🛍️',
+        'Entertainment': '🎮',
+        'Subscription': '🔄',
+        'Travel': '✈️',
+        'Gift': '🎁',
+        'Insurance': '🛡️',
+        'Others': '❓',
+    }
+    return emoji_map.get(category, '❔')
+
 
 @app.route("/clear_transactions", methods=['POST'])
 def clear_transactions():
@@ -290,9 +316,9 @@ def monthly_category_data():
 
 @app.route('/api/yearly-spending-data')
 def yearly_spending_data():
-    print("👉 Entered yearly_spending_data route")
+    # print("👉 Entered yearly_spending_data route")
     user_id = session.get('user_id')
-    print("✅ user_id:", user_id)
+    # print("✅ user_id:", user_id)
 
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401
@@ -312,11 +338,11 @@ def yearly_spending_data():
         rows = result.fetchall()
         data = [{"year": row.year, "total": float(row.total)} for row in rows]
 
-        print("📦 Yearly data sent to frontend:", data)
+        # print("📦 Yearly data sent to frontend:", data)
         return jsonify(data)
 
     except Exception as e:
-        print("❌ Error in /api/yearly-spending-data:", str(e))
+        # print("❌ Error in /api/yearly-spending-data:", str(e))
         return jsonify({"error": "Internal server error"}), 500
 
 
