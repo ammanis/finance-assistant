@@ -202,3 +202,27 @@
         @media (max-width: 768px) {
         .container { margin: 10px; min-height: 100vh; }
         }
+    .button-group {
+    display: flex;
+    justify-content: space-around;
+    margin: 15px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .button-group button {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px;
+    background: linear-gradient(135deg, #6a5acd, #8a2be2);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+  }
+  .button-group button:hover {
+    transform: scale(1.05);
+    background: #5b4bb7;
+  }

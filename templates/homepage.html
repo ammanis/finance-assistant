@@ -17,11 +17,24 @@
             <h3>AI Insights</h3>
             <p>✅ Monthly Trend: 1.2% less spending than last month</p>
         </div>
+
+        <!-- Scan Button -->
         <div class="add-transaction">
-            <a href="{{ url_for('camera') }}">
-            <button id="scanButton">📷 Scan</button>
-            </a>
+            <!-- <a href="{{ url_for('camera') }}">
+            <button id="scanButton">📷 Scan</button></a> -->
+
+            <form action="/scan" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required>
+            <button type="submit">Scan</button>
+            </form>
+            
+            {% if result %}
+            <h2>OCR Result:</h2>
+            <pre>{{ result }}</pre>
+            {% endif %}
         </div>
+
+        <!-- Add Transaction Button -->
         <div class="add-transaction">
             <button id="addTransactionBtn">➕ Add Transaction</button>
         </div>

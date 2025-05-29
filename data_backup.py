@@ -1,4 +1,4 @@
-# Week 10
+# Week 10 DB
 
 import mysql.connector
 from mysql.connector import Error

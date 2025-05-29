@@ -1,7 +1,8 @@
-# git add.
+# git add .
 # git commit -m ""
 # git tag -a v1.0 -m ""
 # git push origin v1.0
+## current tag v1.8
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash # created hashed password
@@ -9,10 +10,13 @@ from datetime import datetime, timedelta # time, duh..
 from pytz import timezone # convert UTC -> KST
 from models import db, User, Transaction, Category # import from file models.py
 from utils.budget_analysis import get_budget_vs_expense # import from file /utils/budget_analysis
-from sqlalchemy import extract
+from sqlalchemy import extract, text # text - for year API
 from flask_cors import CORS
 from collections import defaultdict
 import calendar
+from utils.budget_analysis import get_budget_vs_expense
+from utils.analysis_tool import get_expense_by_category
+from utils.performance_tester import PerformanceTester
 
 import pytz # converting UTC -> KST
 
@@ -20,20 +24,18 @@ import pytz # converting UTC -> KST
 from flask import send_file
 from data_backup import DataBackupManager
 
-# for budget_analysis
-from utils.budget_analysis import get_budget_vs_expense
+# for connecting AI w/ Flask
+from pathlib import Path
+import subprocess
+import os
 
-# for analysis_tool
-from utils.analysis_tool import get_expense_by_category
-
-# for performance_tester
-from utils.performance_tester import PerformanceTester
-
-from sqlalchemy import text
+# for Scan routing 
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True) # Access-Control-Allow-Origin ?
 app.secret_key = 'your_secret_key'  # Change this to a secure key
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads') # for OCR connection
 
 # Configuring SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/finance_manager' # mysql -u root -p
@@ -106,9 +108,76 @@ def homepage():
                             balance=balance,
                             user=user)
 
+# Just showing camera
 @app.route('/camera')
 def camera():
     return render_template('camera.html')
+
+# Subprocess the ocr
+@app.route('/scan', methods=['POST'])
+def scan():
+    if 'username' not in session:
+        return redirect(url_for('home'))
+
+    user = User.query.filter_by(username=session['username']).first()
+    if not user:
+        return "User not found", 404
+
+    # Save uploaded file
+    file = request.files['file']
+    filename = secure_filename(file.filename)
+    image_path = Path(app.config['UPLOAD_FOLDER']) / filename
+    file.save(str(image_path))
+
+    # Define OCR script and Python interpreter paths
+    OCR_PROJECT_DIR = Path(__file__).parent.parent / "flask-auth-ai" / "ocr_project"
+    ocr_python = Path("C:/Users/ammar/anaconda3/envs/ocr_py311/python.exe")
+    ocr_script = OCR_PROJECT_DIR / "main_ai.py"
+
+    try:
+        result = subprocess.run(
+            [str(ocr_python), str(ocr_script), "classify", str(image_path)],
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            check=True
+        )
+        if result.stdout:
+            # Only get the last line of output (in case there are multiple lines)
+            last_line = result.stdout.strip().split('\n')[-1]
+            parts = last_line.strip().split('|')
+            if len(parts) == 3:
+                category, amount, merchant = parts
+                output = {
+                    "category": category,
+                    "amount": amount,
+                    "merchant": merchant
+                }
+            else:
+                output = {"error": "OCR script output format error (expected category|amount|merchant)."}
+        else:
+            output = {"error": "OCR script ran but returned no output."}
+    except subprocess.CalledProcessError as e:
+        output = {
+            "error": f"OCR failed: {e.stderr}"
+        }
+
+    # Fetch transaction data
+    transactions = Transaction.query.filter_by(user_id=user.user_id).all()
+    total_income = sum(t.amount for t in transactions if t.amount > 0)
+    total_expense = sum(t.amount for t in transactions if t.amount < 0)
+    balance = user.initial_income + total_income + total_expense
+
+    return render_template('homepage.html',
+                           user=user,
+                           username=user.username,
+                           transactions=transactions,
+                           total_income=total_income,
+                           total_expense=abs(total_expense),
+                           balance=balance,
+                           result=output)
+
 
 @app.route('/add_transaction', methods=['POST'])
 def add_transaction():
