@@ -97,7 +97,8 @@ def homepage():
     if not user:
             return "User not found", 404
 
-    transactions = Transaction.query.filter_by(user_id=user.user_id).all()
+    # transactions = Transaction.query.filter_by(user_id=user.user_id).all()
+    transactions = Transaction.query.filter_by(user_id=user.user_id).order_by(Transaction.date.desc()).all()
 
     total_income = sum(t.amount for t in transactions if t.amount >0)
     total_expense = sum(t.amount for t in transactions if t.amount < 0)
@@ -118,10 +119,6 @@ def camera():
     return render_template('camera.html')
 
 # Subprocess the ocr
-# Receive the image blob
-# Save it temporarily
-# Run OCR via subprocess
-# Render results on homepage.html
 @app.route('/scan', methods=['POST'])
 def scan():
     if 'username' not in session:
@@ -184,6 +181,52 @@ def scan():
             output = {"error": "OCR returned no output"}
     except Exception as e:
         output = {"error": f"OCR subprocess failed: {e}"}
+
+    # # Insert transcation here..
+    # if error indented, maybe bcs after 'if' statement, no space!
+
+    if 'error' not in output:
+        # Prepare fields for transaction
+        category_name = output['category']
+        try:
+            amount = float(output['amount'])  # Ensure it's float
+        except ValueError:
+            return jsonify({"error": "Invalid amount format from OCR."}), 400
+
+        description_parts = []
+        if 'merchant' in output:
+            description_parts.append(f"Merchant: {output['merchant']}")
+        # Add more fields like place/employee/foods if available
+        # For now just use merchant
+        description = ' | '.join(description_parts)
+
+        trans_type = 'expense'  # Default assumption
+        cat_type = 2  # Expense category type
+
+        # Check if category exists (system default), else create it
+        category = Category.query.filter_by(name=category_name, type=cat_type, user_id=None).first()
+        if not category:
+            category = Category(name=category_name, type=cat_type, user_id=None)
+            db.session.add(category)
+            db.session.commit()
+
+        kst = timezone('Asia/Seoul')
+        now_kst = datetime.now(kst)
+
+        new_trans = Transaction(
+            amount=-amount,  # Expenses are stored as negative
+            type=trans_type,
+            category=category.name,
+            category_id=category.category_id,
+            description=description,
+            user_id=user.user_id,
+            date=now_kst
+        )
+
+        db.session.add(new_trans)
+        db.session.commit()
+
+        output["status"] = "Transaction added"
 
     return jsonify(output)
 
