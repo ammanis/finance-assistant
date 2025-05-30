@@ -22,7 +22,7 @@ import pytz # converting UTC -> KST
 
 # for data_backup
 from flask import send_file
-from data_backup import DataBackupManager
+from utils.data_backup import DataBackupManager
 
 # for connecting AI w/ Flask
 from pathlib import Path
@@ -31,6 +31,10 @@ import os
 
 # for Scan routing 
 from werkzeug.utils import secure_filename
+
+# Document Scanner
+from utils.document_scanner import process_uploaded_file
+import time
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True) # Access-Control-Allow-Origin ?
@@ -114,22 +118,33 @@ def camera():
     return render_template('camera.html')
 
 # Subprocess the ocr
+# Receive the image blob
+# Save it temporarily
+# Run OCR via subprocess
+# Render results on homepage.html
 @app.route('/scan', methods=['POST'])
 def scan():
     if 'username' not in session:
-        return redirect(url_for('home'))
+        # Return JSON error, not a redirect!
+        return jsonify({"error": "Not logged in"}), 401
 
     user = User.query.filter_by(username=session['username']).first()
     if not user:
-        return "User not found", 404
+        return jsonify({"error": "User not found"}), 404
 
-    # Save uploaded file
-    file = request.files['file']
-    filename = secure_filename(file.filename)
-    image_path = Path(app.config['UPLOAD_FOLDER']) / filename
-    file.save(str(image_path))
+    try:
+        if 'image' not in request.files:
+            return jsonify({"error": "No image uploaded"}), 400
 
-    # Define OCR script and Python interpreter paths
+        image_file = request.files['image']
+        image_path = process_uploaded_file(image_file.stream)
+
+        if not os.path.exists(image_path):
+            return jsonify({"error": f"Image file does not exist: {image_path}"}), 400
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to scan image: {e}"}), 500
+
     OCR_PROJECT_DIR = Path(__file__).parent.parent / "flask-auth-ai" / "ocr_project"
     ocr_python = Path("C:/Users/ammar/anaconda3/envs/ocr_py311/python.exe")
     ocr_script = OCR_PROJECT_DIR / "main_ai.py"
@@ -141,43 +156,36 @@ def scan():
             text=True,
             encoding='utf-8',
             errors='replace',
-            check=True
+            check=False  # Don't raise exception, handle manually
         )
-        if result.stdout:
-            # Only get the last line of output (in case there are multiple lines)
+        # Check for error in stderr or stdout
+        error_line = None
+        for line in (result.stderr.strip() + '\n' + result.stdout.strip()).split('\n'):
+            if line.startswith("ERROR|"):
+                error_line = line
+                break
+
+        if error_line:
+            # Extract error message after "ERROR|"
+            error_msg = error_line.split('|', 1)[1] if '|' in error_line else error_line
+            output = {"error": f"OCR failed: {error_msg}"}
+        elif result.stdout:
             last_line = result.stdout.strip().split('\n')[-1]
-            parts = last_line.strip().split('|')
-            if len(parts) == 3:
-                category, amount, merchant = parts
-                output = {
-                    "category": category,
-                    "amount": amount,
-                    "merchant": merchant
-                }
+            if last_line.startswith("ERROR|"):
+                output = {"error": f"OCR failed: {last_line.split('|', 1)[1]}"}
             else:
-                output = {"error": "OCR script output format error (expected category|amount|merchant)."}
+                parts = last_line.strip().split('|')
+                if len(parts) == 3:
+                    category, amount, merchant = parts
+                    output = {"category": category, "amount": amount, "merchant": merchant}
+                else:
+                    output = {"error": "OCR output format error"}
         else:
-            output = {"error": "OCR script ran but returned no output."}
-    except subprocess.CalledProcessError as e:
-        output = {
-            "error": f"OCR failed: {e.stderr}"
-        }
+            output = {"error": "OCR returned no output"}
+    except Exception as e:
+        output = {"error": f"OCR subprocess failed: {e}"}
 
-    # Fetch transaction data
-    transactions = Transaction.query.filter_by(user_id=user.user_id).all()
-    total_income = sum(t.amount for t in transactions if t.amount > 0)
-    total_expense = sum(t.amount for t in transactions if t.amount < 0)
-    balance = user.initial_income + total_income + total_expense
-
-    return render_template('homepage.html',
-                           user=user,
-                           username=user.username,
-                           transactions=transactions,
-                           total_income=total_income,
-                           total_expense=abs(total_expense),
-                           balance=balance,
-                           result=output)
-
+    return jsonify(output)
 
 @app.route('/add_transaction', methods=['POST'])
 def add_transaction():

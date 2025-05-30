@@ -237,27 +237,82 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+});
 
-    // Camera page logic
-    const closeButton = document.getElementById("closeCamera");
+// Camera page logic
+// Capture & Upload Logic
+document.addEventListener("DOMContentLoaded", () => {
     const video = document.getElementById("video");
+    const captureButton = document.getElementById("captureImage");
+    const closeButton = document.getElementById("closeCamera");
+    const canvas = document.getElementById("canvas");
     let stream = null;
 
-    if (video && closeButton) {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then((mediaStream) => {
-                stream = mediaStream;
-                video.srcObject = stream;
-            })
-            .catch((err) => {
-                alert("Camera access denied: " + err.message);
-                console.error(err);
-            });
-
-        closeButton.addEventListener("click", () => {
-            if (stream) stream.getTracks().forEach(track => track.stop());
-            if (video) video.srcObject = null;
-            window.location.href = "/";
+    if (closeCamera && captureButton && video && canvas) {
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        })
+        .then((mediaStream) => {
+            video.srcObject = mediaStream;
+        })
+        .catch((err) => {
+            alert("Camera access denied: " + err.message);
+            console.error(err);
         });
+
+        // Modify the capture handler
+        closeButton.addEventListener("click", () => {
+                    if (stream) stream.getTracks().forEach(track => track.stop());
+                    if (video) video.srcObject = null;
+                    window.location.href = "/";
+                });
+
+        captureButton.addEventListener("click", () => {
+        // Set canvas size to match video stream
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Set loading state
+        captureButton.disabled = true;
+        const originalText = captureButton.textContent;
+        captureButton.textContent = "Loading...";
+
+        canvas.toBlob((blob) => {
+            const formData = new FormData();
+            formData.append("image", blob, "receipt.jpg");
+
+            fetch("/scan", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(result => {
+                // Display result below the video
+                const resultDiv = document.getElementById("ocrResult");
+                if (resultDiv) {
+                    resultDiv.innerHTML = `
+                        <h2>OCR Result</h2>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                }
+            })
+            .catch(err => {
+                alert("Upload failed: " + err.message);
+                console.error(err);
+            })
+            .finally(() => {
+                // Restore button state
+                captureButton.disabled = false;
+                captureButton.textContent = originalText;
+            });
+        }, "image/jpeg");
+    });
+
     }
 });
