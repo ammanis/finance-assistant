@@ -38,7 +38,7 @@ function initStatsChart() {
             data: {
                 labels: data.days,
                 datasets: [{
-                    label: 'Spending (₩)',
+                    label: 'Spending ($)',
                     data: data.spending,
                     backgroundColor: '#6a5acd',
                     borderColor: '#6a5acd',
@@ -88,7 +88,7 @@ function updateCategoryBreakdown(mode = 'week') {
 
         const categoryAmount = document.createElement('span');
         const amount = data.categories[category].toLocaleString();
-        categoryAmount.textContent = `₩${amount}`;
+        categoryAmount.textContent = `$${amount}`;
 
         categoryItem.appendChild(categoryName);
         categoryItem.appendChild(categoryAmount);
@@ -99,7 +99,7 @@ function updateCategoryBreakdown(mode = 'week') {
 
         // Print total expense
         const totalElement = document.querySelector('.total-expenses h3');
-        totalElement.textContent = `Total Expenses: ₩${totalExpenses.toLocaleString()}`;
+        totalElement.textContent = `Total Expenses: $${totalExpenses.toLocaleString()}`;
     })
     .catch(error => console.error('Error fetching category breakdown data:', error));
 }
@@ -133,7 +133,7 @@ function updateMonthlyChart() {
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `${context.label}: ₩${context.raw.toLocaleString()}`;
+                                    return `${context.label}: $${context.raw.toLocaleString()}`;
                                 }
                             }
                         }
@@ -165,7 +165,7 @@ function updateYearlyChart() {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Yearly Spending (₩)',
+                    label: 'Yearly Spending ($)',
                     data: values,
                     backgroundColor: '#FF9F40',
                     borderColor: '#FF9F40',
@@ -181,7 +181,7 @@ function updateYearlyChart() {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return `₩${value.toLocaleString()}`;
+                                return `${value.toLocaleString()}`;
                             }
                         },
                         grid: { color: '#f0f0f0' }
@@ -200,7 +200,7 @@ function updateYearlyChart() {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `₩${context.raw.toLocaleString()}`;
+                                return `$${context.raw.toLocaleString()}`;
                             }
                         }
                     }
@@ -249,6 +249,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let stream = null;
 
     if (closeCamera && captureButton && video && canvas) {
+
+        // Start camera
         navigator.mediaDevices.getUserMedia({
             video: {
                 width: { ideal: 1280 },
@@ -263,14 +265,16 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error(err);
         });
 
-        // Modify the capture handler
+        // Close camera
         closeButton.addEventListener("click", () => {
                     if (stream) stream.getTracks().forEach(track => track.stop());
                     if (video) video.srcObject = null;
                     window.location.href = "/";
                 });
-
+        
+         // Capture and upload image
         captureButton.addEventListener("click", () => {
+            
         // Set canvas size to match video stream
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;

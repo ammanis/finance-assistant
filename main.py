@@ -10,7 +10,7 @@ from datetime import datetime, timedelta # time, duh..
 from pytz import timezone # convert UTC -> KST
 from models import db, User, Transaction, Category # import from file models.py
 from utils.budget_analysis import get_budget_vs_expense # import from file /utils/budget_analysis
-from sqlalchemy import extract, text # text - for year API
+from sqlalchemy import extract, text, func # text - for year API
 from flask_cors import CORS
 from collections import defaultdict
 import calendar
@@ -42,8 +42,8 @@ app.secret_key = 'your_secret_key'  # Change this to a secure key
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads') # for OCR connection
 
 # Configuring SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/finance_manager' # mysql -u root -p
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False                                          # password: root
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1234@localhost/finance_manager' # mysql -u root -p
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False                                          # password: 1234
 db.init_app(app)                                                                              # USE finance_manager;          
 
 @app.route('/')
@@ -97,6 +97,7 @@ def homepage():
     if not user:
             return "User not found", 404
 
+    # Making the 'Recent Transaction' at top for recent one
     # transactions = Transaction.query.filter_by(user_id=user.user_id).all()
     transactions = Transaction.query.filter_by(user_id=user.user_id).order_by(Transaction.date.desc()).all()
 
@@ -121,32 +122,47 @@ def camera():
 # Subprocess the ocr
 @app.route('/scan', methods=['POST'])
 def scan():
+
+    # Map Chinese OCR category to English
+    CATEGORY_MAPPING = {
+        "购物": "Shopping",
+        "超市": "Groceries",
+        "其他": "Others",
+        "餐饮": "Dining"
+    }
+
+    # Check if user is logged in via session
     if 'username' not in session:
-        # Return JSON error, not a redirect!
         return jsonify({"error": "Not logged in"}), 401
 
+     # Get user from DB
     user = User.query.filter_by(username=session['username']).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
 
     try:
+        # Check if an image file is included in the request
         if 'image' not in request.files:
             return jsonify({"error": "No image uploaded"}), 400
 
+        # Get the uploaded image file and process it (scan + enhance + save)
         image_file = request.files['image']
         image_path = process_uploaded_file(image_file.stream)
 
+        # Make sure the image was successfully saved
         if not os.path.exists(image_path):
             return jsonify({"error": f"Image file does not exist: {image_path}"}), 400
         
     except Exception as e:
         return jsonify({"error": f"Failed to scan image: {e}"}), 500
 
+    # Setup OCR execution via external Python script
     OCR_PROJECT_DIR = Path(__file__).parent.parent / "flask-auth-ai" / "ocr_project"
     ocr_python = Path("C:/Users/ammar/anaconda3/envs/ocr_py311/python.exe")
     ocr_script = OCR_PROJECT_DIR / "main_ai.py"
 
     try:
+        # Run external OCR script with subprocess
         result = subprocess.run(
             [str(ocr_python), str(ocr_script), "classify", str(image_path)],
             capture_output=True,
@@ -171,6 +187,7 @@ def scan():
             if last_line.startswith("ERROR|"):
                 output = {"error": f"OCR failed: {last_line.split('|', 1)[1]}"}
             else:
+                # Parse successful result (expected format: category|amount|merchant)
                 parts = last_line.strip().split('|')
                 if len(parts) == 3:
                     category, amount, merchant = parts
@@ -185,7 +202,14 @@ def scan():
     # # Insert transcation here..
     # if error indented, maybe bcs after 'if' statement, no space!
 
+    # If OCR succeeded, store the transaction in the database
     if 'error' not in output:
+
+        # After subprocess returns result
+        category_cn = output['category']
+        category_name = CATEGORY_MAPPING.get(category_cn, category_cn)  # fallback to original if unmapped
+        output['category'] = category_name
+
         # Prepare fields for transaction
         category_name = output['category']
         try:
@@ -193,9 +217,11 @@ def scan():
         except ValueError:
             return jsonify({"error": "Invalid amount format from OCR."}), 400
 
+        # Prepare description (currently just the merchant)
         description_parts = []
         if 'merchant' in output:
             description_parts.append(f"Merchant: {output['merchant']}")
+
         # Add more fields like place/employee/foods if available
         # For now just use merchant
         description = ' | '.join(description_parts)
@@ -210,9 +236,11 @@ def scan():
             db.session.add(category)
             db.session.commit()
 
+        # Get current time in Korea
         kst = timezone('Asia/Seoul')
         now_kst = datetime.now(kst)
 
+        # Create and insert transaction (expenses are stored as negative)
         new_trans = Transaction(
             amount=-amount,  # Expenses are stored as negative
             type=trans_type,
@@ -465,42 +493,39 @@ def yearly_spending_data():
         # print("❌ Error in /api/yearly-spending-data:", str(e))
         return jsonify({"error": "Internal server error"}), 500
 
-
 @app.route('/api/category-breakdown')
 def category_breakdown():
     try:
         user_id = session.get('user_id')
-        ##print(f"[DEBUG] Session user_id: {user_id}")
-        
         if not user_id:
             return jsonify({'error': 'Unauthorized'}), 401
-        
-        transactions = Transaction.query.filter_by(user_id=user_id).all()
-        ##print(f"[DEBUG] Found {len(transactions)} transactions")
-        
-        # Dictionary to store category-wise spending
-        category_spending = {}
-        
-        # Iterate over all transactions to group by category
-        for t in transactions:
-            if t.amount < 0:  # Only considering expenses (negative amounts)
-                if t.category not in category_spending:
-                    category_spending[t.category] = 0
-                category_spending[t.category] += abs(t.amount)
-        
-        # Prepare the data to be returned
-        response_data = {
-            'categories': category_spending
-        }
 
-        ##print(f"[DEBUG] Category breakdown data: {response_data}")
-        
-        return jsonify(response_data)
-    
+        mode = request.args.get('mode', 'week')
+        now = datetime.now(timezone('Asia/Seoul'))
+
+        query = Transaction.query.filter_by(user_id=user_id, type='expense')
+
+        if mode == 'week':
+            start = now - timedelta(days=now.weekday())  # start of this week (Monday)
+            query = query.filter(Transaction.date >= start)
+        elif mode == 'month':
+            query = query.filter(
+                extract('year', Transaction.date) == now.year,
+                extract('month', Transaction.date) == now.month
+            )
+        elif mode == 'year':
+            query = query.filter(
+                extract('year', Transaction.date) == now.year
+            )
+
+        results = query.with_entities(Transaction.category, func.sum(Transaction.amount)).group_by(Transaction.category).all()
+
+        category_spending = {cat: round(abs(total), 2) for cat, total in results}
+
+        return jsonify({'categories': category_spending})
+
     except Exception as e:
-        ##print(f"[ERROR] /api/category-breakdown failed: {e}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/budget_vs_expense')
 def budget_vs_expense():
@@ -580,4 +605,4 @@ def backup_json(user_id):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

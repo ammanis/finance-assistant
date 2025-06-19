@@ -15,11 +15,11 @@
     <div class="transaction-section">
         <div class="transaction-item">
             <div>Income</div>
-            <div>₩{{total_income|int|format_won }}</div>
+            <div>${{'%.2f'|format(total_income) }}</div>
         </div>
         <div class="transaction-item">
             <div>Expense</div>
-            <div>₩{{total_expense|int|format_won}}</div>
+            <div>${{'%.2f'|format(total_expense)}}</div>
         </div>
     </div>
 

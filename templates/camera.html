@@ -5,47 +5,39 @@
     <title>Scan Receipt</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='man.css') }}">
-    <script src="{{ url_for('static', filename='man.js') }}"></script>
     <style>
         .camera-view video, .camera-view canvas {
-        border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        width: 96%;
-        height: 400px;     /* Increase this value for more height */
-        max-height: 70vh;
-        background: #222;
-        object-fit: cover;
-    }
-
-        video, canvas {
-            height: 400px !important;
-            width: 100% !important;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            width: 96%;
+            height: 400px;
+            max-height: 70vh;
+            background: #222;
             object-fit: cover;
         }
+
         .camera-view {
             width: 100%;
-            height: auto;
             display: flex;
-            align-items: stretch;
+            align-items: stretch; 
             justify-content: center;
         }
+
         .bottom-bar {
-            position: relative;
-            z-index: 1;
             padding: 16px 8px 24px 8px;
-            background: transparent;
             display: flex;
             flex-direction: column;
-            align-items: stretch;
             gap: 12px;
         }
+
         .camera-buttons {
             display: flex;
             justify-content: space-between;
             gap: 12px;
         }
+
         .camera-buttons button {
-            flex: 1 1 0;
+            flex: 1;
             padding: 12px 0;
             font-size: 1.1em;
             border: none;
@@ -53,36 +45,92 @@
             background: #6a82fb;
             color: #fff;
             cursor: pointer;
-            transition: background 0.2s;
         }
+
         #ocrResult {
             background: #fff;
-            margin-top: 12px;
             padding: 12px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             min-height: 40px;
             font-size: 1em;
-            word-break: break-all;
-            text-align: left;
+            word-break: break-word;
         }
     </style>
 </head>
 <body>
-    
-        <div class="camera-section">
-            <div class="camera-view">
-                <video id="video" autoplay playsinline style="height:500px;width:100%;object-fit:cover;"></video>
-                <canvas id="canvas" style="display: none;"></canvas>
-            </div>
-        </div>
-        <div class="bottom-bar">
-            <div class="camera-buttons">
-                <button id="captureImage">📸 Capture & OCR</button>
-                <button id="closeCamera">❌ Close</button>
-            </div>
-            <div id="ocrResult"></div>
-        </div>
+
+<div class="camera-section">
+    <div class="camera-view">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas" style="display: none;"></canvas>
+    </div>
+</div>
+
+<div class="bottom-bar">
+    <div class="camera-buttons">
+        <button id="captureImage">📸 Capture & Scan</button>
+        <button id="closeCamera">❌ Close</button>
+    </div>
+    <div id="ocrResult">No scan yet.</div>
+</div>
+
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('captureImage');
+    const closeBtn = document.getElementById('closeCamera');
+    const resultDiv = document.getElementById('ocrResult');
+
+    // Start camera
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        .then(stream => { video.srcObject = stream; })
+        .catch(err => { alert("Camera access failed: " + err); });
+
+    // Capture and send to backend
+    captureBtn.addEventListener('click', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(blob => {
+            const formData = new FormData();
+            formData.append('image', blob, 'scan.jpg');
+
+            resultDiv.innerHTML = "⏳ Scanning...";
+
+            fetch('/scan', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    resultDiv.innerHTML = `<span style="color:red">❌ ${data.error}</span>`;
+                } else {
+                    resultDiv.innerHTML = `
+                        ✅ <strong>Scan Result:</strong><br>
+                        Category: <b>${data.category}</b><br>
+                        Amount: ₩<b>${data.amount}</b><br>
+                        Merchant: <b>${data.merchant}</b><br>
+                        <hr>Status: ${data.status || "Success"}
+                    `;
+                }
+            })
+            .catch(err => {
+                resultDiv.innerHTML = `<span style="color:red">❌ Error: ${err.message}</span>`;
+            });
+        }, 'image/jpeg');
+    });
+
+    closeBtn.addEventListener('click', () => {
+        const stream = video.srcObject;
+        stream?.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+        resultDiv.innerHTML = "Camera closed.";
+    });
+</script>
 
 </body>
 </html>

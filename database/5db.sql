@@ -1,12 +1,15 @@
 -- mysql -u root -p
--- password: root
+-- password: 1234
 -- USE finance_manager; 
 
 -- SELECT * FROM users, transactions, categories;
 
--- INSERT INTO users, transactions, categories ("your_attributes")
+-- DESC transactions;
+
+-- INSERT INTO transactions (user_id, amount, type, category, description, date, category_id)
 -- VALUE
--- ("what u want to add")
+-- (1, -25.50, 'expense', 'Transport', 'Bus + subway', '2025-06-01 09:30:00', 4),
+-- (1, -33.33, 'expense', 'Dining', 'Midnight snacks', '2025-06-16 23:00:00', 3);
 
 -- DELETE FROM categories;
 -- INSERT INTO categories (category_id, name, type, user_id) VALUES

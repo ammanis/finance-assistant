@@ -18,9 +18,12 @@ def enhance_image(image):
     return thresh
 
 def scan_detection(image):
+
+    # Default document contour (full image)
     WIDTH, HEIGHT = image.shape[1], image.shape[0]
     document_contour = np.array([[0, 0], [WIDTH, 0], [WIDTH, HEIGHT], [0, HEIGHT]])
     
+    # Preprocess image and find largest 4-point contour
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
     _, threshold = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -41,15 +44,14 @@ def scan_detection(image):
     return four_point_transform(image, document_contour.reshape(4, 2))
 
 def process_uploaded_file(file_stream):
+
     # Convert uploaded file to OpenCV image
     nparr = np.frombuffer(file_stream.read(), np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
-    # Perform scanning
-    scanned_img = scan_detection(img)
-    
-    # Enhance for OCR
-    enhanced_img = enhance_image(scanned_img)
+    # Detect document and enhance image
+    scanned_img = scan_detection(img) # Perform scanning
+    enhanced_img = enhance_image(scanned_img) # Enhance for OCR
     
     # Save processed image as PNG (lossless, better for OCR)
     save_path = Path("static/uploads")

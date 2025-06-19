@@ -7,10 +7,10 @@
     <div id="homePage" class="page active">
         <div class="header">Hello, {{user.username}}</div>
         <div class="balance-section">
-            <h2>₩{{ balance|int|format_won }}</h2>
+            <h2>${{ '%.2f'|format(balance) }}</h2>
             <div class="balance-details">
-                <span>Spent: ₩{{ total_expense|int|format_won}}</span>
-                <span>Left: ₩{{ balance|int|format_won }}</span>
+                <span>Spent: ${{ '%.2f'|format(total_expense)}}</span>
+                <span>Left: ${{ '%.2f'|format(balance) }}</span>
             </div>
         </div>
         <div class="insights">
@@ -92,7 +92,7 @@
             <div class="transaction-item">
             <span>{{ txn.category | category_emoji }} {{ txn.category }}</span>
             <span class="{% if txn.amount < 0 %}negative{% else %}positive{% endif %}">
-                {% if txn.amount < 0 %}-{% else %}+{% endif %} ₩{{ txn.amount | abs | int | format_won }}
+                {% if txn.amount < 0 %}-{% else %}+{% endif %} ${{ '%.2f'|format(txn.amount|abs )  }}
             </span>
             </div>
         {% else %}
