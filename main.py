@@ -1,8 +1,9 @@
 # git add .
 # git commit -m ""
+# git push origin main
 # git tag -a v1.0 -m ""
 # git push origin v1.0
-## current tag v1.8
+## current tag v2.2
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash # created hashed password
