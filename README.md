@@ -12,7 +12,7 @@ Common issues include:
 
 ## Objectives
 The main goals of this porject are to:
-*Develop an intelligent and user-friendly financial management application for the general public.
+* Develop an intelligent and user-friendly financial management application for the general public.
 * Provide easy and intuitive income and expense tracking.
 * Apply AI techniques to analyze spending behavior and predict future expenses.
 * Help users, especially students, build better financial habits and reduce unnecessary spending.
