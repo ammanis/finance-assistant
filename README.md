@@ -1,4 +1,5 @@
 # Project Summary
+<img width="828" height="270" alt="image" src="https://github.com/user-attachments/assets/7f96fcc5-caf7-46ee-83f3-285ebe61026f" />
 
 **Finance Assistant: AI-Based** is a smart financial management system designed to help users—especially students—track expenses, manage budgets, and develop better spending habits. The system combines traditional expense tracking with AI-based analysis and prediction to provide more intelligent financial insights.
 
@@ -69,6 +70,13 @@ Responsibilities included:
 * Integration of AI/OCR outputs into the backend system
 
 ## Preview
-<img width="540" height="386" alt="image" src="https://github.com/user-attachments/assets/67d7b851-84bd-40c9-a3b2-03412c14b769" />
-<img width="720" height="434" alt="image" src="https://github.com/user-attachments/assets/a52fe439-3b1b-48bc-901f-461dad5e4990" />
+![Smart+Bill+AI-Based+preview+GIF](https://github.com/user-attachments/assets/b86b63c1-4e03-4caa-b04a-5e0d5d989ccf)
+
+For more detailed, please refer here:
+
+* [Project Report 2025 Spring Semester](https://github.com/user-attachments/files/24908074/Report.Final.Week.-.Finance.Assistant.AI-Based.pdf)
+* [Project Full Presentation](https://github.com/user-attachments/files/24908140/real.Final.Week.-.Smart.Personal.FInance.Assistant.AI-Based.pdf)
+
+
+
 
