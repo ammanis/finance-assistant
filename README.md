@@ -33,16 +33,6 @@ The system allows users to:
 * Analyze spending patterns
 * Receive AI-based insights and predictions
 
-### My Role
-**Backend Developer**
-
-Responsibilities included:
-* Backend API development
-* Database design and management
-* User authentication and authorization
-* Expense data processing and validation
-* Integration of AI/OCR outputs into the backend system
-
 ### Technologies Used
 * **Backend**: Python (Flask)
 * **Database**: MySQL
@@ -68,7 +58,17 @@ Responsibilities included:
 * Add real-time notifcations and alerts
 * Support more detailed financial recommendations
 
-### Preview
+## My Role
+**Backend Developer**
+
+Responsibilities included:
+* Backend API development
+* Database design and management
+* User authentication and authorization
+* Expense data processing and validation
+* Integration of AI/OCR outputs into the backend system
+
+## Preview
 <img width="540" height="386" alt="image" src="https://github.com/user-attachments/assets/67d7b851-84bd-40c9-a3b2-03412c14b769" />
 <img width="720" height="434" alt="image" src="https://github.com/user-attachments/assets/a52fe439-3b1b-48bc-901f-461dad5e4990" />
 
