@@ -25,7 +25,7 @@ Specific goals are:
 * Send timely alerts to prevent overspending and detect unusual transactions.
 * Provide customized saving tips based on user habits.
 
-### System Overview
+## System Overview
 The system allows users to:
 * Record daily income and expenses
 * Categorize transaction automatically
