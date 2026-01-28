@@ -44,11 +44,12 @@ Responsibilities included:
 * Integration of AI/OCR outputs into the backend system
 
 ### Technologies Used
-* **Backend**:Python (Flask)
-* **Database**:MySQL
-* **ORM**:SQLAlchemy
-* **AI/Analysis**:Spending behavior analysis & prediction models
-* **Frontend**:HTML, CSS, JavaScript
+* **Backend**: Python (Flask)
+* **Database**: MySQL
+* **ORM**: SQLAlchemy
+* **AI/Analysis**: Spending behavior analysis & prediction models
+* **Frontend**: HTML, CSS, JavaScript
+* **Full Stack Integration**: AJAX/Fetch API, Jinja2
 * **Tools**:Git, GitHub
 
 ### Key Features
